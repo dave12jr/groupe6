@@ -23,6 +23,20 @@ jobs:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
 
+      - name: Check Secrets
+        run: |
+          if [ -z "$EC2_SSH_KEY" ]; then
+            echo "ERROR: Secret EC2_SSH_KEY is missing!"
+            exit 1
+          fi
+          if [ -z "$EC2_HOST" ]; then
+            echo "ERROR: Secret EC2_HOST is missing!"
+            exit 1
+          fi
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+
       - name: Copy project to EC2 (SCP)
         run: |
           scp -i ~/.ssh/id_rsa -r ./ $EC2_USER@$EC2_HOST:/home/ubuntu/groupe6
