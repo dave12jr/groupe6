@@ -36,6 +36,7 @@ jobs:
           cd /home/ubuntu/${{ github.repository }}
           python3 -m venv venv
           venv/bin/pip install -r requirements.txt
+          export APP_PORT=${{ secrets.APP_PORT }}
           nohup venv/bin/python run.py > app.log 2>&1 &
           EOF
         env:

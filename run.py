@@ -1,5 +1,6 @@
+from os import getenv
 from app.app import app
 
 if __name__ == '__main__':
-    # Le port est 5006 pour le groupe 6
-    app.run(host='0.0.0.0', port=5006)
+    port = int(getenv('APP_PORT', '5006'))
+    app.run(host='0.0.0.0', port=port)
