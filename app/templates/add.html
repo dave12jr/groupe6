@@ -8,6 +8,9 @@
                 <h3>Ajouter un étudiant</h3>
             </div>
             <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
                 <form method="POST">
                     <div class="mb-3">
                         <label for="first_name" class="form-label">Prénom</label>
