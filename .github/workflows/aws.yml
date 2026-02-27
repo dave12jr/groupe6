@@ -23,18 +23,26 @@ jobs:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
 
-      # ✅ AJOUT IMPORTANT ICI
-      - name: Create project directory on EC2
+      - name: Reset project folder on EC2
         run: |
-          ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST \
-          "mkdir -p /home/$EC2_USER/${{ github.repository }}"
+          ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << 'EOF'
+            sudo rm -rf /home/$EC2_USER/${{ github.repository }}
+            mkdir -p /home/$EC2_USER/${{ github.repository }}
+            sudo chown -R $EC2_USER:$EC2_USER /home/$EC2_USER
+          EOF
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
 
-      - name: Copy project to EC2 (SCP)
+      - name: Install rsync
         run: |
-          scp -i ~/.ssh/id_rsa -r ./ \
+          sudo apt-get update
+          sudo apt-get install -y rsync
+
+      - name: Copy project to EC2 (rsync)
+        run: |
+          rsync -avz --delete --exclude '.git' \
+          -e "ssh -i ~/.ssh/id_rsa" ./ \
           $EC2_USER@$EC2_HOST:/home/$EC2_USER/${{ github.repository }}
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
@@ -43,11 +51,11 @@ jobs:
       - name: Install dependencies and run app
         run: |
           ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << EOF
-          cd /home/$EC2_USER/${{ github.repository }}
-          python3 -m venv venv
-          venv/bin/pip install -r requirements.txt
-          export APP_PORT=${{ secrets.APP_PORT }}
-          nohup venv/bin/python run.py > app.log 2>&1 &
+            cd /home/$EC2_USER/${{ github.repository }}
+            python3 -m venv venv
+            venv/bin/pip install -r requirements.txt
+            export APP_PORT=${{ secrets.APP_PORT }}
+            nohup venv/bin/python run.py > app.log 2>&1 &
           EOF
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
