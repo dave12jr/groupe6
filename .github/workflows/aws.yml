@@ -23,13 +23,11 @@ jobs:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
 
-      - name: Reset project folder on EC2
+      - name: Create project folder on EC2
         run: |
-          ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << 'EOF'
-            sudo rm -rf /home/$EC2_USER/${{ github.repository }}
+          ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST "
             mkdir -p /home/$EC2_USER/${{ github.repository }}
-            sudo chown -R $EC2_USER:$EC2_USER /home/$EC2_USER
-          EOF
+          "
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
@@ -50,13 +48,23 @@ jobs:
 
       - name: Install dependencies and run app
         run: |
-          ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST << EOF
+          ssh -i ~/.ssh/id_rsa $EC2_USER@$EC2_HOST "
             cd /home/$EC2_USER/${{ github.repository }}
+
+            # Stop ancienne app
+            pkill -f run.py || true
+
+            # Env virtuel
             python3 -m venv venv
-            venv/bin/pip install -r requirements.txt
+            source venv/bin/activate
+
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            # Lancer app
             export APP_PORT=${{ secrets.APP_PORT }}
-            nohup venv/bin/python run.py > app.log 2>&1 &
-          EOF
+            nohup python run.py > app.log 2>&1 &
+          "
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_HOST: ${{ secrets.EC2_HOST }}
